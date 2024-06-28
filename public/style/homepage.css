@@ -1,0 +1,77 @@
+body {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  height: 100vh;
+  background: linear-gradient(
+    90deg,
+    #e40202 25%,
+    transparent 75%,
+    red 50%,
+    red 75%,
+    transparent 75%,
+    transparent
+  );
+  background-size: 100px 100px;
+  animation: stripes 1s linear infinite;
+}
+
+@keyframes stripes {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 100px 100px;
+  }
+}
+
+#title {
+  margin-left: 30px;
+  display: inline-block;
+}
+
+img {
+  height: 210px;
+  width: 210px;
+  position: relative;
+  float: left;
+}
+
+h1 {
+  margin-left: 220px;
+  margin-top: 25px;
+  margin-bottom: 0%;
+  font-family: "Anton", sans-serif;
+  font-weight: 400;
+  font-style: normal;
+  font-size: 7rem;
+  text-shadow: 4px 4px 4px rgb(82, 79, 79);
+}
+
+button {
+  float: right;
+  background-color: #737373;
+  border: 5px solid black;
+  border-radius: 30px;
+  height: 75px;
+  width: 250px;
+  margin: 40px;
+  font-family: "Lancelot", serif;
+  font-weight: 400;
+  font-size: 1.5rem;
+  font-style: normal;
+  color: white;
+  transition: box-shadow 0.3s ease;
+}
+
+button:hover {
+    box-shadow: 8px 8px 12px rgba(0, 0, 0, 0.6);
+  }
+
+#options {
+  display: grid;
+  margin-right: 4%;
+  margin-top: 22%;
+  float: right;
+}
+
