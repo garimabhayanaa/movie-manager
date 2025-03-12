@@ -23,7 +23,7 @@
 ### Steps  
 1. **Clone the Repository:**  
    ```bash
-   git clone https://lnkd.in/gh_WFVFj
+   git clone https://github.com/garimabhayanaa/movie-manager
    cd Movie-Manager
 2. **Install Dependencies:**
    ```bash
