@@ -275,4 +275,85 @@ export const database = {
       });
     }
   },
+
+  // Badge System
+  getUserBadges: async (userId: string) => {
+    const q = query(
+      collection(db, 'userBadges'),
+      where('userId', '==', userId)
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+      earnedAt: doc.data().earnedAt?.toDate()
+    }));
+  },
+
+  awardBadge: async (userId: string, badgeId: string) => {
+    const userBadgeData = {
+      userId,
+      badgeId,
+      earnedAt: serverTimestamp(),
+    };
+    
+    await addDoc(collection(db, 'userBadges'), userBadgeData);
+    
+    // Add activity for badge earned
+    await database.addActivity({
+      userId,
+      type: 'badge_earned',
+      badgeId,
+    });
+  },
+
+  checkAndAwardBadges: async (userId: string) => {
+    // This function would be called after user actions to check if they've earned new badges
+    const badges = await getAllBadges(); // Implementation needed
+    const earnedBadges = await database.getUserBadges(userId);
+    const earnedBadgeIds = new Set(earnedBadges.map(eb => eb.badgeId));
+    
+    // Check each badge criteria
+    for (const badge of badges) {
+      if (earnedBadgeIds.has(badge.id)) continue;
+      
+      const meetscriteria = await checkBadgeCriteria(userId, badge);
+      if (meetscriteria) {
+        await database.awardBadge(userId, badge.id);
+      }
+    }
+  },
 };
+
+// Helper function to check badge criteria
+const checkBadgeCriteria = async (userId: string, badge: any): Promise<boolean> => {
+  try {
+    const userMovies = await database.getUserMovies(userId);
+    const watchedMovies = userMovies.filter(um => um.status === 'watched');
+    
+    switch (badge.criteria.type) {
+      case 'movies_watched':
+        return watchedMovies.length >= badge.criteria.value;
+      
+      case 'reviews_written':
+        const reviewCount = watchedMovies.filter(um => um.review).length;
+        return reviewCount >= badge.criteria.value;
+      
+      case 'lists_created':
+        const userLists = await database.getUserLists(userId);
+        return userLists.length >= badge.criteria.value;
+      
+      case 'streak_days':
+        // This would check the user's current streak
+        const userProfile = await getUserProfile(userId);
+        return (userProfile?.currentStreak || 0) >= badge.criteria.value;
+      
+      default:
+        return false;
+    }
+  } catch (error) {
+    console.error('Error checking badge criteria:', error);
+    return false;
+  }
+};
+
