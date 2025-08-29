@@ -201,4 +201,78 @@ export const database = {
     const snapshot = await getDocs(q);
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
   },
+
+  // Like System
+  toggleLike: async (targetType: string, targetId: string, userId: string) => {
+    const likeId = `${targetType}_${targetId}_${userId}`;
+    const likeRef = doc(db, 'likes', likeId);
+    const likeDoc = await getDoc(likeRef);
+
+    if (likeDoc.exists()) {
+      // Unlike - remove the like
+      await deleteDoc(likeRef);
+      
+      // Decrement like count on target
+      await database.updateLikeCount(targetType, targetId, -1);
+    } else {
+      // Like - add the like
+      await setDoc(likeRef, {
+        targetType,
+        targetId,
+        userId,
+        createdAt: serverTimestamp(),
+      });
+      
+      // Increment like count on target
+      await database.updateLikeCount(targetType, targetId, 1);
+    }
+  },
+
+  checkLikeStatus: async (targetType: string, targetId: string, userId: string): Promise<boolean> => {
+    const likeId = `${targetType}_${targetId}_${userId}`;
+    const likeDoc = await getDoc(doc(db, 'likes', likeId));
+    return likeDoc.exists();
+  },
+
+  updateLikeCount: async (targetType: string, targetId: string, increment: number) => {
+    const targetRef = doc(db, `${targetType}s`, targetId);
+    await updateDoc(targetRef, {
+      likes: increment(increment),
+    });
+  },
+
+  getLikeCount: async (targetType: string, targetId: string): Promise<number> => {
+    const targetDoc = await getDoc(doc(db, `${targetType}s`, targetId));
+    return targetDoc.exists() ? targetDoc.data().likes || 0 : 0;
+  },
+
+  // Comment System
+  addComment: async (commentData: any) => {
+    await addDoc(collection(db, 'comments'), {
+      ...commentData,
+      createdAt: serverTimestamp(),
+    });
+  },
+
+  toggleCommentLike: async (commentId: string, userId: string) => {
+    const likeId = `comment_${commentId}_${userId}`;
+    const likeRef = doc(db, 'commentLikes', likeId);
+    const likeDoc = await getDoc(likeRef);
+
+    if (likeDoc.exists()) {
+      await deleteDoc(likeRef);
+      await updateDoc(doc(db, 'comments', commentId), {
+        likes: increment(-1),
+      });
+    } else {
+      await setDoc(likeRef, {
+        commentId,
+        userId,
+        createdAt: serverTimestamp(),
+      });
+      await updateDoc(doc(db, 'comments', commentId), {
+        likes: increment(1),
+      });
+    }
+  },
 };
