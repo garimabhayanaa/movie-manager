@@ -164,4 +164,41 @@ export const database = {
 
     await batch.commit();
   },
+
+  // Follow System
+  addFollow: async (followerId: string, followingId: string) => {
+    await addDoc(collection(db, 'follows'), {
+      followerId,
+      followingId,
+      createdAt: serverTimestamp(),
+    });
+  },
+
+  removeFollow: async (followerId: string, followingId: string) => {
+    const q = query(
+      collection(db, 'follows'),
+      where('followerId', '==', followerId),
+      where('followingId', '==', followingId)
+    );
+    const snapshot = await getDocs(q);
+    snapshot.docs.forEach(doc => deleteDoc(doc.ref));
+  },
+
+  getFollowers: async (userId: string) => {
+    const q = query(
+      collection(db, 'follows'),
+      where('followingId', '==', userId)
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  },
+
+  getFollowing: async (userId: string) => {
+    const q = query(
+      collection(db, 'follows'),
+      where('followerId', '==', userId)
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  },
 };
